@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
-	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	jwt "github.com/form3tech-oss/jwt-go"
 	"github.com/gohttp/pprof"
+	"github.com/golang-jwt/jwt/v5"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/phyber/negroni-gzip/gzip"
 	"github.com/prometheus/client_golang/prometheus"
@@ -153,12 +152,12 @@ func setupJWTAuthMiddleware() *jwtAuth {
 	return &jwtAuth{
 		PrefixWhitelistPaths: Config.JWTAuthPrefixWhitelistPaths,
 		ExactWhitelistPaths:  Config.JWTAuthExactWhitelistPaths,
-		JWTMiddleware: jwtmiddleware.New(jwtmiddleware.Options{
+		JWTMiddleware: New(Options{
 			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 				return validationKey, errParsingKey
 			},
 			SigningMethod: signingMethod,
-			Extractor: jwtmiddleware.FromFirst(
+			Extractor: FromFirst(
 				func(r *http.Request) (string, error) {
 					c, err := r.Cookie(Config.JWTAuthCookieTokenName)
 					if err != nil {
@@ -166,7 +165,7 @@ func setupJWTAuthMiddleware() *jwtAuth {
 					}
 					return c.Value, nil
 				},
-				jwtmiddleware.FromAuthHeader,
+				FromAuthHeader,
 			),
 			UserProperty: Config.JWTAuthUserProperty,
 			Debug:        Config.JWTAuthDebug,
@@ -190,12 +189,13 @@ func jwtErrorHandler(w http.ResponseWriter, r *http.Request, err string) {
 type jwtAuth struct {
 	PrefixWhitelistPaths []string
 	ExactWhitelistPaths  []string
-	JWTMiddleware        *jwtmiddleware.JWTMiddleware
+	JWTMiddleware        *JWTMiddleware
 }
 
 func (a *jwtAuth) whitelist(req *http.Request) bool {
 	path := req.URL.Path
-
+	fmt.Printf("req: %+v\n", req)
+	fmt.Printf("path from req: %s\n", path)
 	// If we set to 401 unauthorized, let the client handles the 401 itself
 	if Config.JWTAuthNoTokenStatusCode == http.StatusUnauthorized {
 		for _, p := range a.ExactWhitelistPaths {
@@ -204,7 +204,7 @@ func (a *jwtAuth) whitelist(req *http.Request) bool {
 			}
 		}
 	}
-
+	fmt.Printf("PrefixOfWhitelistedPaths: %+v\n", a.PrefixWhitelistPaths)
 	for _, p := range a.PrefixWhitelistPaths {
 		if p != "" && strings.HasPrefix(path, p) {
 			return true

@@ -59,7 +59,10 @@ var NewKafkaRecorder = func() DataRecorder {
 	cfg.Producer.Flush.Frequency = config.Config.RecorderKafkaFlushFrequency
 	cfg.Version = mustParseKafkaVersion(config.Config.RecorderKafkaVersion)
 
+	logrus.Infof("config Data read: %+v", config.Config)
+
 	brokerList := strings.Split(config.Config.RecorderKafkaBrokers, ",")
+	logrus.WithField("brokerList", brokerList).Info("brokerList read before producing: ")
 	producer, err := saramaNewAsyncProducer(brokerList, cfg)
 	if err != nil {
 		logrus.WithField("kafka_error", err).Fatal("Failed to start Sarama producer:")
@@ -145,6 +148,8 @@ func (k *kafkaRecorder) AsyncRecord(r models.EvalResult) {
 		logrus.WithField("err", err).Error("failed to generate data record frame for kafka recorder")
 		return
 	}
+	logrus.WithField("dataToKafka", k.producer).Error("data to be sent to kafka:")
+
 	var partitionKey sarama.Encoder = nil
 	if k.partitionKeyEnabled {
 		partitionKey = sarama.StringEncoder(frame.GetPartitionKey())
