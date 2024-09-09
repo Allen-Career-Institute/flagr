@@ -3,6 +3,7 @@ package config
 import (
 	"crypto/subtle"
 	"fmt"
+	"github.com/openflagr/flagr/pkg/config/jwtmiddleware"
 	"net/http"
 	"strconv"
 	"strings"
@@ -152,12 +153,12 @@ func setupJWTAuthMiddleware() *jwtAuth {
 	return &jwtAuth{
 		PrefixWhitelistPaths: Config.JWTAuthPrefixWhitelistPaths,
 		ExactWhitelistPaths:  Config.JWTAuthExactWhitelistPaths,
-		JWTMiddleware: New(Options{
+		JWTMiddleware: jwtmiddleware.New(jwtmiddleware.Options{
 			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 				return validationKey, errParsingKey
 			},
 			SigningMethod: signingMethod,
-			Extractor: FromFirst(
+			Extractor: jwtmiddleware.FromFirst(
 				func(r *http.Request) (string, error) {
 					c, err := r.Cookie(Config.JWTAuthCookieTokenName)
 					if err != nil {
@@ -165,7 +166,7 @@ func setupJWTAuthMiddleware() *jwtAuth {
 					}
 					return c.Value, nil
 				},
-				FromAuthHeader,
+				jwtmiddleware.FromAuthHeader,
 			),
 			UserProperty: Config.JWTAuthUserProperty,
 			Debug:        Config.JWTAuthDebug,
@@ -189,7 +190,7 @@ func jwtErrorHandler(w http.ResponseWriter, r *http.Request, err string) {
 type jwtAuth struct {
 	PrefixWhitelistPaths []string
 	ExactWhitelistPaths  []string
-	JWTMiddleware        *JWTMiddleware
+	JWTMiddleware        *jwtmiddleware.JWTMiddleware
 }
 
 func (a *jwtAuth) whitelist(req *http.Request) bool {

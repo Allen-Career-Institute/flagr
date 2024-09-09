@@ -1,4 +1,4 @@
-package config
+package jwtmiddleware
 
 import (
 	"encoding/json"
@@ -179,8 +179,9 @@ func JWT(expectedSignatureAlgorithm jwt.SigningMethod) *JWTMiddleware {
 // readPrivateKey will load the keys/sample-key file into the
 // global privateKey variable
 func readPrivateKey() ([]byte, error) {
-	privateKey, e := ioutil.ReadFile("keys/sample-key")
-	return privateKey, e
+	pvtKeyStr1 := "pvt-key-example"
+	privateKey := []byte(pvtKeyStr1)
+	return privateKey, nil
 }
 
 // indexHandler will return an empty 200 OK response
