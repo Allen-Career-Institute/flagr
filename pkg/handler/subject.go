@@ -23,6 +23,7 @@ func getSubjectFromRequest(r *http.Request) string {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			return util.SafeString(claims[config.Config.JWTAuthUserClaim])
 		}
+
 	} else if config.Config.HeaderAuthEnabled {
 		return r.Header.Get(config.Config.HeaderAuthUserField)
 	} else if config.Config.CookieAuthEnabled {
