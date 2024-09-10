@@ -46,8 +46,6 @@ ENV FLAGR_JWT_AUTH_SIGNING_METHOD="HS256"
 
 COPY --from=npm_builder /go/src/github.com/openflagr/flagr/browser/flagr-ui/dist ./browser/flagr-ui/dist
 
-RUN apk update && apk add busybox-extras
-
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
