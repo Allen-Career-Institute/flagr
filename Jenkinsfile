@@ -5,7 +5,7 @@ commonPipelineForGolang(
     environment: [
         GOPRIVATE : "https://github.com/Allen-Career-Institute/*",
         DEPLOY_GITOPS_REPO : "central-gitops-repo",
-        DEPLOY_TARGET_FILE : "app-charts/flagr-service-chart/values-dev.yaml",
+        DEPLOY_TARGET_FILE : "app-charts/flagr/values-dev.yaml",
         DEPLOY_TARGET_FILE_LIVE : "app-charts-live/flagr-service/values-dev.yaml",
         DEPLOY_TARGET_BRANCH : "main",
         REGISTRY : "537984406465.dkr.ecr.ap-south-1.amazonaws.com",

@@ -1,11 +1,13 @@
+// nolint: errcheck
 package handler
 
 import (
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"math/rand"
 	"sync"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/openflagr/flagr/pkg/config"
 	"github.com/openflagr/flagr/pkg/entity"
@@ -222,6 +224,9 @@ var logEvalResult = func(r *models.EvalResult, dataRecordsEnabled bool) {
 		return
 	}
 	rec := GetDataRecorder()
+
+	// TODO: add flagType as parameter while sending the records to the data platform
+	// TODO: we must receive the flagType during evaluation request
 	rec.AsyncRecord(*r)
 }
 
