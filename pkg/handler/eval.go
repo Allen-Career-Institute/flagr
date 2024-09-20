@@ -225,8 +225,6 @@ var logEvalResult = func(r *models.EvalResult, dataRecordsEnabled bool) {
 	}
 	rec := GetDataRecorder()
 
-	// TODO: add flagType as parameter while sending the records to the data platform
-	// TODO: we must receive the flagType during evaluation request
 	rec.AsyncRecord(*r)
 }
 

@@ -3,7 +3,6 @@ package entity
 
 import (
 	"fmt"
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openflagr/flagr/pkg/config"
 	"github.com/openflagr/flagr/pkg/util"
