@@ -21,9 +21,6 @@ func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
 		}
 		f.Key = key
 	}
-	//if params.Body.Template == "simple_boolean_flag" {
-	//	// TODO: either add flag details in separate table or add a type in existing flag table itself
-	//}
 
 	tx := getDB().Begin()
 
