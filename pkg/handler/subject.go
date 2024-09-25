@@ -6,7 +6,7 @@ import (
 	"github.com/openflagr/flagr/pkg/config"
 	"github.com/openflagr/flagr/pkg/util"
 
-	jwt "github.com/form3tech-oss/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 func getSubjectFromRequest(r *http.Request) string {
