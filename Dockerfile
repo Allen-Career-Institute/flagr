@@ -3,7 +3,9 @@
 ######################################
 FROM node:18 as npm_builder
 WORKDIR /go/src/github.com/Allen-Career-Institute/flagr
-ARG ENVIRONMENT=local
+
+# setting default arg as dev currently to test the flow in dev/sandbox
+ARG ENVIRONMENT=dev
 ENV ENVIRONMENT=${ENVIRONMENT}
 COPY . .
 ARG FLAGR_UI_POSSIBLE_ENTITY_TYPES=null
@@ -30,7 +32,8 @@ ENV PORT=18000
 
 ENV FLAGR_DB_DBDRIVER=sqlite3
 ENV FLAGR_DB_DBCONNECTIONSTR=/data/demo_sqlite3.db
-ENV FLAGR_RECORDER_ENABLED=true
+# for local testing set FLAGR_RECORDER_ENABLED to false
+ENV FLAGR_RECORDER_ENABLED=false
 
 # JWT Environment Variables
 ENV FLAGR_JWT_AUTH_ENABLED=true
@@ -38,9 +41,10 @@ ENV FLAGR_JWT_AUTH_DEBUG=true
 ENV FLAGR_JWT_AUTH_WHITELIST_PATHS="/api/v1/health,/api/v1/evaluation,/login,/callback,/static,/favicon.ico"
 ENV FLAGR_JWT_AUTH_EXACT_WHITELIST_PATHS=",/,/login,/callback"
 ENV FLAGR_JWT_AUTH_COOKIE_TOKEN_NAME="access_token"
-# ENV FLAGR_JWT_AUTH_SECRET="secret"
+ENV FLAGR_JWT_AUTH_SECRET="4fg88hsdf04ea6f26e3d1d3c5f17aba9770fab35de1400d7de89212cb2d32e240323f33a261181bd60b779cc97d15affbf6c51128b07c26964911c0b16b155f6c0c4e6f96e55649d03e9cbc7ca9681102e267be067ccb611c6cb35e07612c0449358a1e0cc7f638ac7c228f25e9650d8c6ea72e2619ef5474a11d9733afec91a"
 ENV FLAGR_JWT_AUTH_NO_TOKEN_STATUS_CODE=307
-# ENV FLAGR_JWT_AUTH_NO_TOKEN_REDIRECT_URL="http://localhost:3000/login" (for local testing)
+# temp changes to test flow in dev end to end
+ENV FLAGR_JWT_AUTH_NO_TOKEN_REDIRECT_URL="http://127.0.0.1:18000/login"
 # ENV FLAGR_JWT_AUTH_NO_TOKEN_REDIRECT_URL="http://localhost:18000/login" (to be overriden in k8 yaml file as per env)
 ENV FLAGR_JWT_AUTH_USER_CLAIM=uid
 ENV FLAGR_JWT_AUTH_SIGNING_METHOD=HS256
