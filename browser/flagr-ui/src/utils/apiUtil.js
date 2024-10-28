@@ -38,8 +38,12 @@ export function determineEnv(hostname) {
 	if (hostname.includes("stage")) {
 	  return ENVS.STAGE
 	}
+
+	if(hostname.includes("live")) {
+		return ENVS.PROD
+	}
   
-	return ENVS.PROD
+	return ENVS.DEV
 }
 
 export const setupAxiosInstance = () => {
