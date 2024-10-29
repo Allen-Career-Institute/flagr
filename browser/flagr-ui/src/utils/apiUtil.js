@@ -28,7 +28,7 @@ export function isLocalNetwork(hostname) {
 export function determineEnv(hostname) {
 	if (!hostname) {
 	  console.warn("Couldn't determine host. Using production environment.")
-	  return ENVS.PROD
+	  return ENVS.DEV
 	}
   
 	if (isLocalNetwork(hostname) || hostname.includes("dev") || hostname.includes("demo")) {
