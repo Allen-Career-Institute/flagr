@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/latch"
 	"strings"
 
 	"github.com/Allen-Career-Institute/flagr/pkg/entity"
@@ -33,6 +34,9 @@ type CRUD interface {
 	SetFlagEnabledState(flag.SetFlagEnabledParams) middleware.Responder
 	GetFlagSnapshots(params flag.GetFlagSnapshotsParams) middleware.Responder
 	GetFlagEntityTypes(params flag.GetFlagEntityTypesParams) middleware.Responder
+
+	//Latch
+	CreateLatch(latch.CreateLatchParams) middleware.Responder
 
 	//Tags
 	CreateTag(tag.CreateTagParams) middleware.Responder
