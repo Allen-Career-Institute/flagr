@@ -258,7 +258,9 @@ export default {
     },
     getFlags() {
       let tagsUrl = '';
-      if (!this.isModeAB) {
+      if (this.isModeAB) {
+        tagsUrl = '?tags=AB';
+      } else {
         tagsUrl = '?tags=latch';
       }
       getAxiosFlagrInstance().get(`/flags${tagsUrl}`).then(response => {
