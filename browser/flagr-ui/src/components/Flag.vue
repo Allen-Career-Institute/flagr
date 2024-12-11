@@ -341,7 +341,7 @@
                         >
                           <el-button @click="putSegmentsReorder(flag.segments)">Reorder</el-button>
                         </el-tooltip>
-                        <el-button @click="dialogCreateSegmentOpen = true">New {{ currentTerms.segment }}</el-button>
+                        <el-button v-if="isModeAB" @click="dialogCreateSegmentOpen = true">New {{ currentTerms.segment }}</el-button>
                       </div>
                     </div>
                   </div>
