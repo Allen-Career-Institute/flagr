@@ -367,7 +367,7 @@
                               size="small"
                               @click="putSegment(segment)"
                             >Save {{ currentTerms.segment }} Setting</el-button>
-                            <el-button @click="deleteSegment(segment)" size="small">
+                            <el-button @click="deleteSegment(segment)" size="small" v-if="isModeAB">
                               <ElIcon>
                                 <Delete />
                               </ElIcon>
@@ -633,6 +633,12 @@ const DEFAULT_CONSTRAINT = {
   value: ""
 };
 
+const DEFAULT_CONSTRAINT_LATCH = {
+  operator: "IN",
+  property: "",
+  value: ""
+};
+
 const DEFAULT_VARIANT = {
   key: ""
 };
@@ -648,8 +654,9 @@ const DEFAULT_DISTRIBUTION = {
   percent: 0
 };
 
-function processSegment(segment) {
-  segment.newConstraint = clone(DEFAULT_CONSTRAINT);
+function processSegment(segment, isModeAB) {
+  const defaultConstraint = isModeAB ? DEFAULT_CONSTRAINT : DEFAULT_CONSTRAINT_LATCH
+  segment.newConstraint = clone(defaultConstraint);
 }
 
 function processVariant(variant) {
@@ -992,7 +999,7 @@ export default {
         this.newSegment
       ).then(response => {
         let segment = response.data;
-        processSegment(segment);
+        processSegment(segment, this.isModeAB);
         segment.constraints = [];
         this.newSegment = clone(DEFAULT_SEGMENT);
         this.flag.segments.push(segment);
