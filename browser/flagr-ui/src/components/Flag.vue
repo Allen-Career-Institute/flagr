@@ -877,6 +877,10 @@ export default {
       }, handleErr.bind(this));
     },
     createTag() {
+      if((this.newTag.value.toLowerCase() === 'latch' && this.isModeAB) || (this.newTag.value.toLowerCase() === 'ab' && !this.isModeAB)) {
+        this.$message.error("tag value cannot be "+this.newTag.value);
+        return;
+      }
       getAxiosFlagrInstance().post(`/flags/${this.flagId}/tags`, this.newTag).then(
         response => {
           let tag = response.data;
@@ -918,6 +922,10 @@ export default {
       });
     },
     deleteTag(tag) {
+      if((tag.value.toLowerCase() === 'latch' && !this.isModeAB) || (tag.value.toLowerCase() === 'ab' && this.isModeAB)) {
+        this.$message.error(tag.value +" tag cannot be deleted when in " + (this.isModeAB ? "AB": "Latch") + " mode");
+        return;
+      }
       if (!confirm(`Are you sure you want to delete tag #${tag.value}`)) {
         return;
       }
