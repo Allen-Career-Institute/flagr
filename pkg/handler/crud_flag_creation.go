@@ -8,33 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
+const ErrorCreatingFlag = "cannot create flag. %s"
+
 func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
-	f := &entity.Flag{}
-	if params.Body != nil {
-		f.Description = util.SafeString(params.Body.Description)
-		f.CreatedBy = getSubjectFromRequest(params.HTTPRequest)
-
-		key, err := entity.CreateFlagKey(params.Body.Key)
-		if err != nil {
-			return flag.NewCreateFlagDefault(400).WithPayload(
-				ErrorMessage("cannot create flag. %s", err))
-		}
-		f.Key = key
-	}
-
-	tx := getDB().Begin()
-
-	if err := tx.Create(f).Error; err != nil {
-		tx.Rollback()
-		return flag.NewCreateFlagDefault(500).WithPayload(
-			ErrorMessage("cannot create flag. %s", err))
+	f, tx, responder := c.createFlagEntity(params)
+	if responder != nil {
+		return responder
 	}
 
 	if params.Body.Template == "simple_boolean_flag" {
 		if err := LoadSimpleBooleanFlagTemplate(f, tx); err != nil {
 			tx.Rollback()
 			return flag.NewCreateFlagDefault(500).WithPayload(
-				ErrorMessage("cannot create flag. %s", err))
+				ErrorMessage(ErrorCreatingFlag, err))
 		}
 	} else if params.Body.Template != "" {
 		return flag.NewCreateFlagDefault(400).WithPayload(
@@ -54,17 +40,49 @@ func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
 		return flag.NewCreateFlagDefault(500).WithPayload(ErrorMessage("%s", err))
 	}
 
+	resp, m := c.mapResponseAndSaveFlagSnapShot(params, f)
+	if m != nil {
+		return m
+	}
+
+	return resp
+}
+
+func (c *crud) mapResponseAndSaveFlagSnapShot(params flag.CreateFlagParams, f *entity.Flag) (*flag.CreateFlagOK, middleware.Responder) {
 	resp := flag.NewCreateFlagOK()
 	payload, err := e2rMapFlag(f)
 	if err != nil {
-		return flag.NewCreateFlagDefault(500).WithPayload(
+		return nil, flag.NewCreateFlagDefault(500).WithPayload(
 			ErrorMessage("cannot map flag. %s", err))
 	}
 	resp.SetPayload(payload)
 
 	entity.SaveFlagSnapshot(getDB(), f.ID, getSubjectFromRequest(params.HTTPRequest))
+	return resp, nil
+}
 
-	return resp
+func (c *crud) createFlagEntity(params flag.CreateFlagParams) (*entity.Flag, *gorm.DB, middleware.Responder) {
+	f := &entity.Flag{}
+	if params.Body != nil {
+		f.Description = util.SafeString(params.Body.Description)
+		f.CreatedBy = getSubjectFromRequest(params.HTTPRequest)
+
+		key, err := entity.CreateFlagKey(params.Body.Key)
+		if err != nil {
+			return nil, nil, flag.NewCreateFlagDefault(400).WithPayload(
+				ErrorMessage(ErrorCreatingFlag, err))
+		}
+		f.Key = key
+	}
+
+	tx := getDB().Begin()
+
+	if err := tx.Create(f).Error; err != nil {
+		tx.Rollback()
+		return nil, nil, flag.NewCreateFlagDefault(500).WithPayload(
+			ErrorMessage(ErrorCreatingFlag, err))
+	}
+	return f, tx, nil
 }
 
 // LoadSimpleBooleanFlagTemplate loads the simple boolean flag template into

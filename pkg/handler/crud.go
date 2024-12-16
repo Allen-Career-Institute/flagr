@@ -3,8 +3,9 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/latch"
 	"strings"
+
+	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/latch"
 
 	"github.com/Allen-Career-Institute/flagr/pkg/entity"
 	"github.com/Allen-Career-Institute/flagr/pkg/mapper/entity_restapi/e2r"

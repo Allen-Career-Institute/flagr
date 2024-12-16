@@ -2,9 +2,10 @@ package handler
 
 import (
 	"fmt"
-	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/flag"
 	"strconv"
 	"testing"
+
+	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/flag"
 
 	"github.com/Allen-Career-Institute/flagr/pkg/entity"
 	"github.com/Allen-Career-Institute/flagr/pkg/util"

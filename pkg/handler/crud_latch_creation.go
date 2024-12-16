@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+
 	"github.com/Allen-Career-Institute/flagr/pkg/entity"
 	"github.com/Allen-Career-Institute/flagr/pkg/util"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/flag"
@@ -13,25 +14,9 @@ import (
 const ErrorCreatingLatch = "cannot create latch. %s"
 
 func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder {
-	f := &entity.Flag{}
-	if params.Body != nil {
-		f.Description = util.SafeString(params.Body.Description)
-		f.CreatedBy = getSubjectFromRequest(params.HTTPRequest)
-
-		key, err := entity.CreateFlagKey(params.Body.Key)
-		if err != nil {
-			return flag.NewCreateFlagDefault(400).WithPayload(
-				ErrorMessage(ErrorCreatingLatch, err))
-		}
-		f.Key = key
-	}
-
-	tx := getDB().Begin()
-
-	if err := tx.Create(f).Error; err != nil {
-		tx.Rollback()
-		return flag.NewCreateFlagDefault(500).WithPayload(
-			ErrorMessage(ErrorCreatingLatch, err))
+	f, tx, responder := c.createFlagEntity(flag.CreateFlagParams(params))
+	if responder != nil {
+		return responder
 	}
 
 	if err := LoadSimpleLatchTemplate(f, tx); err != nil {
@@ -46,15 +31,10 @@ func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder 
 		return flag.NewCreateFlagDefault(500).WithPayload(ErrorMessage("%s", err))
 	}
 
-	resp := flag.NewCreateFlagOK()
-	payload, err := e2rMapFlag(f)
-	if err != nil {
-		return flag.NewCreateFlagDefault(500).WithPayload(
-			ErrorMessage("cannot map flag. %s", err))
+	resp, m := c.mapResponseAndSaveFlagSnapShot(flag.CreateFlagParams(params), f)
+	if m != nil {
+		return m
 	}
-	resp.SetPayload(payload)
-
-	entity.SaveFlagSnapshot(getDB(), f.ID, getSubjectFromRequest(params.HTTPRequest))
 
 	return resp
 }
