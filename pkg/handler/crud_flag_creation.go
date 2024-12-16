@@ -41,6 +41,7 @@ func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
 			ErrorMessage("unknown value for template: %s", params.Body.Template))
 	}
 
+	// adding AB tag in order to easily fetch only AB Experiments and ignore latch
 	err := associateTagWithFlag(f, tx, "AB")
 	if err != nil {
 		return flag.NewCreateFlagDefault(500).WithPayload(

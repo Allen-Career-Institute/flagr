@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const ErrorCreatingLatch = "cannot create latch. %s"
+
 func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder {
 	f := &entity.Flag{}
 	if params.Body != nil {
@@ -19,7 +21,7 @@ func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder 
 		key, err := entity.CreateFlagKey(params.Body.Key)
 		if err != nil {
 			return flag.NewCreateFlagDefault(400).WithPayload(
-				ErrorMessage("cannot create latch. %s", err))
+				ErrorMessage(ErrorCreatingLatch, err))
 		}
 		f.Key = key
 	}
@@ -29,13 +31,13 @@ func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder 
 	if err := tx.Create(f).Error; err != nil {
 		tx.Rollback()
 		return flag.NewCreateFlagDefault(500).WithPayload(
-			ErrorMessage("cannot create latch. %s", err))
+			ErrorMessage(ErrorCreatingLatch, err))
 	}
 
 	if err := LoadSimpleLatchTemplate(f, tx); err != nil {
 		tx.Rollback()
 		return flag.NewCreateFlagDefault(500).WithPayload(
-			ErrorMessage("cannot create latch. %s", err))
+			ErrorMessage(ErrorCreatingLatch, err))
 	}
 
 	err := tx.Commit().Error
@@ -61,6 +63,7 @@ func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder 
 // a new flag. It creates a single segment with 100% rollout, variant ('APPLICABLE'),
 // and distribution of variant as 100% as well.
 func LoadSimpleLatchTemplate(flag *entity.Flag, tx *gorm.DB) error {
+	// adding latch tag with each creation in order easily fetch all the latches filtering out AB experiments
 	err := associateTagWithFlag(flag, tx, "latch")
 	if err != nil {
 		return err
