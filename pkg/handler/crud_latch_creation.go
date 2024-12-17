@@ -59,29 +59,29 @@ func LoadSimpleLatchTemplate(flag *entity.Flag, tx *gorm.DB) error {
 	}
 
 	// Create our default segment with 100% rollout
-	s := &entity.Segment{}
-	s.FlagID = flag.ID
-	s.RolloutPercent = uint(100)
-	s.Rank = entity.SegmentDefaultRank
+	seg := &entity.Segment{}
+	seg.FlagID = flag.ID
+	seg.RolloutPercent = uint(100)
+	seg.Rank = entity.SegmentDefaultRank
 
-	if err := tx.Create(s).Error; err != nil {
+	if err := tx.Create(seg).Error; err != nil {
 		return err
 	}
 
 	// default Distribution with 100% for the variant
-	d := &entity.Distribution{}
-	d.SegmentID = s.ID
-	d.VariantID = v.ID
-	d.VariantKey = v.Key
-	d.Percent = uint(100)
+	dist := &entity.Distribution{}
+	dist.SegmentID = seg.ID
+	dist.VariantID = v.ID
+	dist.VariantKey = v.Key
+	dist.Percent = uint(100)
 
-	if err := tx.Create(d).Error; err != nil {
+	if err := tx.Create(dist).Error; err != nil {
 		return err
 	}
 
-	s.Distributions = append(s.Distributions, *d)
+	seg.Distributions = append(seg.Distributions, *dist)
 	flag.Variants = append(flag.Variants, *v)
-	flag.Segments = append(flag.Segments, *s)
+	flag.Segments = append(flag.Segments, *seg)
 
 	return nil
 }
