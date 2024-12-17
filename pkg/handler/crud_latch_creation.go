@@ -13,13 +13,17 @@ import (
 
 const ErrorCreatingLatch = "cannot create latch. %s"
 
+// Declare a global function variable for LoadSimpleLatchTemplate
+var loadLatchTemplateFunc = LoadSimpleLatchTemplate
+var associateTagWithFlagFunc = associateTagWithFlag
+
 func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder {
 	f, tx, responder := c.createFlagEntity(flag.CreateFlagParams(params))
 	if responder != nil {
 		return responder
 	}
 
-	if err := LoadSimpleLatchTemplate(f, tx); err != nil {
+	if err := loadLatchTemplateFunc(f, tx); err != nil {
 		tx.Rollback()
 		return flag.NewCreateFlagDefault(500).WithPayload(
 			ErrorMessage(ErrorCreatingLatch, err))
@@ -44,7 +48,7 @@ func (c *crud) CreateLatch(params latch.CreateLatchParams) middleware.Responder 
 // and distribution of variant as 100% as well.
 func LoadSimpleLatchTemplate(flag *entity.Flag, tx *gorm.DB) error {
 	// adding latch tag with each creation in order easily fetch all the latches filtering out AB experiments
-	err := associateTagWithFlag(flag, tx, "latch")
+	err := associateTagWithFlagFunc(flag, tx, "latch")
 	if err != nil {
 		return err
 	}

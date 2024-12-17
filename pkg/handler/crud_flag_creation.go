@@ -28,7 +28,7 @@ func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
 	}
 
 	// adding AB tag in order to easily fetch only AB Experiments and ignore latch
-	err := associateTagWithFlag(f, tx, "AB")
+	err := associateTagWithFlagFunc(f, tx, "AB")
 	if err != nil {
 		return flag.NewCreateFlagDefault(500).WithPayload(
 			ErrorMessage("cannot associate AB tag to flag. %s", err))
