@@ -49,7 +49,16 @@ func LoadSimpleLatchTemplate(flag *entity.Flag, tx *gorm.DB) error {
 		return err
 	}
 
-	// Create our default segment
+	//our default Variant "APPLICABLE" that tells if latch is applicable for set of levers
+	v := &entity.Variant{}
+	v.FlagID = flag.ID
+	v.Key = "APPLICABLE"
+
+	if err := tx.Create(v).Error; err != nil {
+		return err
+	}
+
+	// Create our default segment with 100% rollout
 	s := &entity.Segment{}
 	s.FlagID = flag.ID
 	s.RolloutPercent = uint(100)
@@ -59,16 +68,7 @@ func LoadSimpleLatchTemplate(flag *entity.Flag, tx *gorm.DB) error {
 		return err
 	}
 
-	// .. and our default Variant
-	v := &entity.Variant{}
-	v.FlagID = flag.ID
-	v.Key = "APPLICABLE"
-
-	if err := tx.Create(v).Error; err != nil {
-		return err
-	}
-
-	// .. and our default Distribution
+	// default Distribution with 100% for the variant
 	d := &entity.Distribution{}
 	d.SegmentID = s.ID
 	d.VariantID = v.ID
