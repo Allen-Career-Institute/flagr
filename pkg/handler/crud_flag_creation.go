@@ -11,9 +11,9 @@ import (
 const ErrorCreatingFlag = "cannot create flag. %s"
 
 func (c *crud) CreateFlag(params flag.CreateFlagParams) middleware.Responder {
-	f, tx, responder := c.createFlagEntity(params)
-	if responder != nil {
-		return responder
+	f, tx, errCreateFlag := c.createFlagEntity(params)
+	if errCreateFlag != nil {
+		return errCreateFlag
 	}
 
 	if params.Body.Template == "simple_boolean_flag" {
