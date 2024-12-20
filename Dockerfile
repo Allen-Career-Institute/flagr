@@ -18,7 +18,7 @@ RUN apk add --no-cache build-base git make
 COPY . .
 RUN make build
 
-FROM 537984406465.dkr.ecr.ap-south-1.amazonaws.com/alpine
+FROM 537984406465.dkr.ecr.ap-south-1.amazonaws.com/alpine:3.21
 
 COPY --from=go_builder /go/src/github.com/Allen-Career-Institute/flagr/flagr .
 
