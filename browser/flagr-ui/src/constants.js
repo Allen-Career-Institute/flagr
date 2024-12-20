@@ -39,7 +39,7 @@ const ENVURLS = {
   },
   DEV: {
     VUE_APP_API_URL : 'http://flagr-new.allen-demo.in/api/v1',
-    VUE_APP_SSO_API_URL : 'https://bff-dev.allen-demo.in/internal-bff/',
+    VUE_APP_SSO_API_URL : 'http://bff-dev.allen-demo.in/internal-bff/',
   }
 }
 
