@@ -1,7 +1,7 @@
 ######################################
 # Prepare npm_builder
 ######################################
-FROM 537984406465.dkr.ecr.ap-south-1.amazonaws.com/node:18 as npm_builder
+FROM node:18 as npm_builder
 WORKDIR /go/src/github.com/Allen-Career-Institute/flagr
 COPY . .
 ARG FLAGR_UI_POSSIBLE_ENTITY_TYPES=null
