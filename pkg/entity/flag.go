@@ -18,6 +18,11 @@ type FlagTag struct {
 	UpdatedBy string
 }
 
+// TableName specifies the table name for FlagTag to match the many-to-many relationship
+func (FlagTag) TableName() string {
+	return "flags_tags"
+}
+
 // Flag is the unit of flags
 type Flag struct {
 	gorm.Model
