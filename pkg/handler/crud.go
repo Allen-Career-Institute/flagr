@@ -410,16 +410,15 @@ func (c *crud) CreateTag(params tag.CreateTagParams) middleware.Responder {
 		return tag.NewCreateTagDefault(500).WithPayload(ErrorMessage("failed to find or create tag: %s", err))
 	}
 
-	// Add the tag to the flag with timestamp information
-	user := getSubjectFromRequest(params.HTTPRequest)
-	if err := entity.AddTagToFlag(getDB(), s.ID, t.ID, user, user); err != nil {
+	// Add the tag to the flag
+	if err := entity.AddTagToFlag(getDB(), s.ID, t.ID); err != nil {
 		return tag.NewCreateTagDefault(500).WithPayload(ErrorMessage("failed to associate tag with flag: %s", err))
 	}
 
 	resp := tag.NewCreateTagOK()
 	resp.SetPayload(e2r.MapTag(t))
 
-	entity.SaveFlagSnapshot(getDB(), util.SafeUint(params.FlagID), user)
+	entity.SaveFlagSnapshot(getDB(), util.SafeUint(params.FlagID), getSubjectFromRequest(params.HTTPRequest))
 	return resp
 }
 

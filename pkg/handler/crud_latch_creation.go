@@ -102,9 +102,8 @@ func associateTagWithFlag(flag *entity.Flag, tx *gorm.DB, tag string) error {
 		return fmt.Errorf("error finding or creating tag: %v", err)
 	}
 
-	// Associate tag to flag with timestamp information
-	// For latch creation, we'll use a system user since we don't have request context here
-	if err := entity.AddTagToFlag(tx, flag.ID, t.ID, "system", "system"); err != nil {
+	// Associate tag to flag
+	if err := entity.AddTagToFlag(tx, flag.ID, t.ID); err != nil {
 		return fmt.Errorf("error associating tag with flag: %v", err)
 	}
 	return nil

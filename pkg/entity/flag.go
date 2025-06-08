@@ -14,8 +14,6 @@ type FlagTag struct {
 	TagID     uint `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	CreatedBy string
-	UpdatedBy string
 }
 
 // TableName specifies the table name for FlagTag to match the many-to-many relationship
@@ -121,8 +119,8 @@ func CreateFlagEntityType(db *gorm.DB, key string) error {
 	return db.Where(d).FirstOrCreate(&d).Error
 }
 
-// AddTagToFlag adds a tag to a flag with timestamps and user information
-func AddTagToFlag(db *gorm.DB, flagID, tagID uint, createdBy, updatedBy string) error {
+// AddTagToFlag adds a tag to a flag
+func AddTagToFlag(db *gorm.DB, flagID, tagID uint) error {
 	// Check if association already exists
 	var existingAssoc FlagTag
 	result := db.Where("flag_id = ? AND tag_id = ?", flagID, tagID).First(&existingAssoc)
@@ -134,29 +132,17 @@ func AddTagToFlag(db *gorm.DB, flagID, tagID uint, createdBy, updatedBy string) 
 	if result.Error == gorm.ErrRecordNotFound {
 		// Create new association
 		flagTag := FlagTag{
-			FlagID:    flagID,
-			TagID:     tagID,
-			CreatedBy: createdBy,
-			UpdatedBy: updatedBy,
+			FlagID: flagID,
+			TagID:  tagID,
 		}
 		return db.Create(&flagTag).Error
 	}
 
-	// Update existing association
-	return UpdateFlagTagAssociation(db, flagID, tagID, updatedBy)
+	// Association already exists, no need to update
+	return nil
 }
 
 // RemoveTagFromFlag removes a tag from a flag
 func RemoveTagFromFlag(db *gorm.DB, flagID, tagID uint) error {
 	return db.Where("flag_id = ? AND tag_id = ?", flagID, tagID).Delete(&FlagTag{}).Error
-}
-
-// UpdateFlagTagAssociation updates the association's updatedBy and updatedAt fields
-func UpdateFlagTagAssociation(db *gorm.DB, flagID, tagID uint, updatedBy string) error {
-	return db.Model(&FlagTag{}).
-		Where("flag_id = ? AND tag_id = ?", flagID, tagID).
-		Updates(map[string]interface{}{
-			"updated_by": updatedBy,
-			"updated_at": time.Now(),
-		}).Error
 }
