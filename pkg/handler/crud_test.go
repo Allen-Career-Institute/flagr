@@ -1520,3 +1520,162 @@ func TestUpdatedByFieldConsistency(t *testing.T) {
 		assert.Equal(t, "", snapshot.UpdatedBy)
 	})
 }
+
+func TestPutFlagUpdatedByEdgeCases(t *testing.T) {
+	var res middleware.Responder
+	db := entity.NewTestDB()
+	c := &crud{}
+
+	tmpDB, dbErr := db.DB()
+	if dbErr != nil {
+		t.Errorf("Failed to get database")
+	}
+
+	defer tmpDB.Close()
+	defer gostub.StubFunc(&getDB, db).Reset()
+
+	// Create a flag first
+	res = c.CreateFlag(flag.CreateFlagParams{
+		Body: &models.CreateFlagRequest{
+			Description: util.StringPtr("test flag for edge cases"),
+			Key:         "test_flag_edge_cases",
+		},
+	})
+	assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+	flagID := res.(*flag.CreateFlagOK).Payload.ID
+
+	t.Run("PutFlag with all fields updated", func(t *testing.T) {
+		// Test updating all possible fields
+		res = c.PutFlag(flag.PutFlagParams{
+			FlagID: flagID,
+			Body: &models.PutFlagRequest{
+				Description:        util.StringPtr("updated description"),
+				Notes:              util.StringPtr("updated notes"),
+				Key:                util.StringPtr("updated_key"),
+				DataRecordsEnabled: util.BoolPtr(true),
+				EntityType:         util.StringPtr("test_entity"),
+			},
+		})
+
+		// Verify the response
+		assert.Equal(t, "", res.(*flag.PutFlagOK).Payload.UpdatedBy)
+		assert.Equal(t, "updated description", *res.(*flag.PutFlagOK).Payload.Description)
+		assert.Equal(t, "updated notes", res.(*flag.PutFlagOK).Payload.Notes)
+		assert.Equal(t, "updated_key", res.(*flag.PutFlagOK).Payload.Key)
+		assert.Equal(t, true, *res.(*flag.PutFlagOK).Payload.DataRecordsEnabled)
+		assert.Equal(t, "test_entity", res.(*flag.PutFlagOK).Payload.EntityType)
+	})
+
+	t.Run("PutFlag with partial fields updated", func(t *testing.T) {
+		// Test updating only some fields
+		res = c.PutFlag(flag.PutFlagParams{
+			FlagID: flagID,
+			Body: &models.PutFlagRequest{
+				Description: util.StringPtr("partially updated description"),
+				// Only update description, leave other fields unchanged
+			},
+		})
+
+		// Verify the response
+		assert.Equal(t, "", res.(*flag.PutFlagOK).Payload.UpdatedBy)
+		assert.Equal(t, "partially updated description", *res.(*flag.PutFlagOK).Payload.Description)
+	})
+
+	t.Run("PutFlag with empty body fields", func(t *testing.T) {
+		// Test with empty/nil fields
+		res = c.PutFlag(flag.PutFlagParams{
+			FlagID: flagID,
+			Body:   &models.PutFlagRequest{
+				// All fields are nil, should not update anything
+			},
+		})
+
+		// Should still set updatedBy field
+		assert.Equal(t, "", res.(*flag.PutFlagOK).Payload.UpdatedBy)
+	})
+}
+
+func TestSetFlagEnabledStateEdgeCases(t *testing.T) {
+	var res middleware.Responder
+	db := entity.NewTestDB()
+	c := &crud{}
+
+	tmpDB, dbErr := db.DB()
+	if dbErr != nil {
+		t.Errorf("Failed to get database")
+	}
+
+	defer tmpDB.Close()
+	defer gostub.StubFunc(&getDB, db).Reset()
+
+	// Create a flag first
+	res = c.CreateFlag(flag.CreateFlagParams{
+		Body: &models.CreateFlagRequest{
+			Description: util.StringPtr("test flag for enabled state"),
+			Key:         "test_flag_enabled_state",
+		},
+	})
+	assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+	flagID := res.(*flag.CreateFlagOK).Payload.ID
+
+	t.Run("Enable flag", func(t *testing.T) {
+		res = c.SetFlagEnabledState(flag.SetFlagEnabledParams{
+			FlagID: flagID,
+			Body: &models.SetFlagEnabledRequest{
+				Enabled: util.BoolPtr(true),
+			},
+		})
+
+		assert.Equal(t, "", res.(*flag.SetFlagEnabledOK).Payload.UpdatedBy)
+		assert.Equal(t, true, *res.(*flag.SetFlagEnabledOK).Payload.Enabled)
+	})
+
+	t.Run("Disable flag", func(t *testing.T) {
+		res = c.SetFlagEnabledState(flag.SetFlagEnabledParams{
+			FlagID: flagID,
+			Body: &models.SetFlagEnabledRequest{
+				Enabled: util.BoolPtr(false),
+			},
+		})
+
+		assert.Equal(t, "", res.(*flag.SetFlagEnabledOK).Payload.UpdatedBy)
+		assert.Equal(t, false, *res.(*flag.SetFlagEnabledOK).Payload.Enabled)
+	})
+}
+
+func TestRestoreFlagEdgeCases(t *testing.T) {
+	var res middleware.Responder
+	db := entity.NewTestDB()
+	c := &crud{}
+
+	tmpDB, dbErr := db.DB()
+	if dbErr != nil {
+		t.Errorf("Failed to get database")
+	}
+
+	defer tmpDB.Close()
+	defer gostub.StubFunc(&getDB, db).Reset()
+
+	// Create a flag first
+	res = c.CreateFlag(flag.CreateFlagParams{
+		Body: &models.CreateFlagRequest{
+			Description: util.StringPtr("test flag for restore"),
+			Key:         "test_flag_restore",
+		},
+	})
+	assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+	flagID := res.(*flag.CreateFlagOK).Payload.ID
+
+	t.Run("Delete and restore flag", func(t *testing.T) {
+		// First delete the flag
+		res = c.DeleteFlag(flag.DeleteFlagParams{FlagID: flagID})
+		assert.NotZero(t, res.(*flag.DeleteFlagOK))
+
+		// Then restore it
+		res = c.RestoreFlag(flag.RestoreFlagParams{FlagID: flagID})
+
+		assert.Equal(t, "", res.(*flag.RestoreFlagOK).Payload.UpdatedBy)
+		assert.Equal(t, "test flag for restore", *res.(*flag.RestoreFlagOK).Payload.Description)
+		assert.Equal(t, "test_flag_restore", res.(*flag.RestoreFlagOK).Payload.Key)
+	})
+}
