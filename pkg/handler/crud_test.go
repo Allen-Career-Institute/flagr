@@ -12,6 +12,7 @@ import (
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/constraint"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/distribution"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/flag"
+	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/latch"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/segment"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/tag"
 	"github.com/Allen-Career-Institute/flagr/swagger_gen/restapi/operations/variant"
@@ -1677,5 +1678,109 @@ func TestRestoreFlagEdgeCases(t *testing.T) {
 		assert.Equal(t, "", res.(*flag.RestoreFlagOK).Payload.UpdatedBy)
 		assert.Equal(t, "test flag for restore", *res.(*flag.RestoreFlagOK).Payload.Description)
 		assert.Equal(t, "test_flag_restore", res.(*flag.RestoreFlagOK).Payload.Key)
+	})
+}
+
+func TestCreateFlagIncludesTags(t *testing.T) {
+	var res middleware.Responder
+	db := entity.NewTestDB()
+	c := &crud{}
+
+	tmpDB, dbErr := db.DB()
+	if dbErr != nil {
+		t.Errorf("Failed to get database")
+	}
+
+	defer tmpDB.Close()
+	defer gostub.StubFunc(&getDB, db).Reset()
+
+	t.Run("CreateFlag should include AB tag in response", func(t *testing.T) {
+		// Create a flag
+		res = c.CreateFlag(flag.CreateFlagParams{
+			Body: &models.CreateFlagRequest{
+				Description: util.StringPtr("test flag with tags"),
+				Key:         "test_flag_with_tags",
+			},
+		})
+
+		// Verify the flag was created successfully
+		assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+
+		// Verify that the AB tag is included in the response
+		tags := res.(*flag.CreateFlagOK).Payload.Tags
+		assert.NotNil(t, tags)
+		assert.Len(t, tags, 1)
+		assert.Equal(t, "AB", *tags[0].Value)
+	})
+
+	t.Run("CreateFlag with template should include AB tag in response", func(t *testing.T) {
+		// Create a flag with template
+		res = c.CreateFlag(flag.CreateFlagParams{
+			Body: &models.CreateFlagRequest{
+				Description: util.StringPtr("test flag with template"),
+				Key:         "test_flag_with_template",
+				Template:    "simple_boolean_flag",
+			},
+		})
+
+		// Verify the flag was created successfully
+		assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+
+		// Verify that the AB tag is included in the response
+		tags := res.(*flag.CreateFlagOK).Payload.Tags
+		assert.NotNil(t, tags)
+		assert.Len(t, tags, 1)
+		assert.Equal(t, "AB", *tags[0].Value)
+
+		// Verify that segments and variants are also included (from template)
+		segments := res.(*flag.CreateFlagOK).Payload.Segments
+		variants := res.(*flag.CreateFlagOK).Payload.Variants
+		assert.NotNil(t, segments)
+		assert.NotNil(t, variants)
+		assert.Len(t, segments, 1)
+		assert.Len(t, variants, 1)
+		assert.Equal(t, "on", *variants[0].Key)
+	})
+}
+
+func TestCreateLatchIncludesTags(t *testing.T) {
+	var res middleware.Responder
+	db := entity.NewTestDB()
+	c := &crud{}
+
+	tmpDB, dbErr := db.DB()
+	if dbErr != nil {
+		t.Errorf("Failed to get database")
+	}
+
+	defer tmpDB.Close()
+	defer gostub.StubFunc(&getDB, db).Reset()
+
+	t.Run("CreateLatch should include latch tag in response", func(t *testing.T) {
+		// Create a latch
+		res = c.CreateLatch(latch.CreateLatchParams{
+			Body: &models.CreateFlagRequest{
+				Description: util.StringPtr("test latch with tags"),
+				Key:         "test_latch_with_tags",
+			},
+		})
+
+		// Verify the latch was created successfully
+		assert.NotZero(t, res.(*flag.CreateFlagOK).Payload.ID)
+
+		// Verify that the latch tag is included in the response
+		tags := res.(*flag.CreateFlagOK).Payload.Tags
+		assert.NotNil(t, tags)
+		assert.Len(t, tags, 1)
+		assert.Equal(t, "latch", *tags[0].Value)
+
+		// Verify that segments and variants are also included (from latch template)
+		segments := res.(*flag.CreateFlagOK).Payload.Segments
+		variants := res.(*flag.CreateFlagOK).Payload.Variants
+		assert.NotNil(t, segments)
+		assert.NotNil(t, variants)
+		assert.Len(t, segments, 1)
+		assert.Len(t, variants, 1)
+		assert.Equal(t, "APPLICABLE", *variants[0].Key)
 	})
 }
