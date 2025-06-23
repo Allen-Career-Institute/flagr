@@ -131,7 +131,7 @@ var LookupFlag = func(evalContext models.EvalContext) *entity.Flag {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "flag_lookup",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"flag_id": util.SafeUint(evalContext.FlagID),
 			"flag_key": util.SafeString(evalContext.FlagKey),
 		}).Info("flag lookup completed")
@@ -163,7 +163,7 @@ var EvalFlag = func(evalContext models.EvalContext) *models.EvalResult {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "flag_evaluation",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"flag_id": util.SafeUint(evalContext.FlagID),
 			"flag_key": util.SafeString(evalContext.FlagKey),
 			"entity_id": util.SafeString(evalContext.EntityID),
@@ -180,7 +180,7 @@ var EvalFlagWithContext = func(flag *entity.Flag, evalContext models.EvalContext
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "flag_evaluation_with_context",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"flag_id": util.SafeUint(evalContext.FlagID),
 			"flag_key": util.SafeString(evalContext.FlagKey),
 			"entity_id": util.SafeString(evalContext.EntityID),
@@ -240,7 +240,7 @@ var EvalFlagWithContext = func(flag *entity.Flag, evalContext models.EvalContext
 	
 	logrus.WithFields(logrus.Fields{
 		"operation": "segment_evaluation",
-		"duration_us": segmentEvalDuration.Microseconds(),
+		"duration_ms": float64(segmentEvalDuration.Microseconds()) / 1000.0,
 		"flag_id": flag.ID,
 		"segments_count": len(flag.Segments),
 		"entity_id": util.SafeString(evalContext.EntityID),
@@ -331,7 +331,7 @@ var evalSegment = func(
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "single_segment_evaluation",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"flag_id": flagID,
 			"segment_id": segment.ID,
 			"constraints_count": len(segment.Constraints),

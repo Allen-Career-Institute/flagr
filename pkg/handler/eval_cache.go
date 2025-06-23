@@ -59,13 +59,13 @@ func (ec *EvalCache) Start() {
 		// Log error instead of panic
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"operation": "initial_cache_load",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Error("initial cache load failed - feature flag evaluations will be disabled")
 		ec.isInitialized.Store(false)
 	} else {
 		logrus.WithFields(logrus.Fields{
 			"operation": "initial_cache_load",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Info("initial cache load completed successfully")
 	}
 
@@ -79,7 +79,7 @@ func (ec *EvalCache) Start() {
 			if err != nil {
 				logrus.WithField("err", err).WithFields(logrus.Fields{
 					"operation": "cache_refresh",
-					"duration_us": duration.Microseconds(),
+					"duration_ms": float64(duration.Microseconds()) / 1000.0,
 				}).Error("reload evaluation cache error")
 			} else {
 				// Enable evaluations if cache load succeeds
@@ -89,12 +89,12 @@ func (ec *EvalCache) Start() {
 				if !wasInitialized {
 					logrus.WithFields(logrus.Fields{
 						"operation": "cache_refresh",
-						"duration_us": duration.Microseconds(),
+						"duration_ms": float64(duration.Microseconds()) / 1000.0,
 					}).Info("cache successfully reloaded - feature flag evaluations are now enabled")
 				} else {
 					logrus.WithFields(logrus.Fields{
 						"operation": "cache_refresh",
-						"duration_us": duration.Microseconds(),
+						"duration_ms": float64(duration.Microseconds()) / 1000.0,
 					}).Info("cache refresh completed successfully")
 				}
 			}
@@ -108,7 +108,7 @@ func (ec *EvalCache) GetByTags(tags []string, operator *string) []*entity.Flag {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "cache_get_by_tags",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"tags_count": len(tags),
 			"operator": util.SafeString(operator),
 		}).Info("cache get by tags completed")
@@ -192,7 +192,7 @@ func (ec *EvalCache) GetByFlagKeyOrID(keyOrID interface{}) *entity.Flag {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "cache_get_by_key_or_id",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"key_or_id": keyOrID,
 		}).Info("cache get by key or ID completed")
 	}()
@@ -228,7 +228,7 @@ func (ec *EvalCache) reloadMapCache() error {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "cache_reload_map",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Info("cache reload map operation completed")
 	}()
 
@@ -243,7 +243,7 @@ func (ec *EvalCache) reloadMapCache() error {
 		
 		logrus.WithFields(logrus.Fields{
 			"operation": "fetch_all_flags",
-			"duration_us": fetchDuration.Microseconds(),
+			"duration_ms": float64(fetchDuration.Microseconds()) / 1000.0,
 		}).Info("fetch all flags operation completed")
 		
 		if err != nil {

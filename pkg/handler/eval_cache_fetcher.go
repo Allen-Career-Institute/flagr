@@ -37,7 +37,7 @@ func (ec *EvalCache) fetchAllFlags() (idCache map[string]*entity.Flag, keyCache 
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "fetch_all_flags_processing",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Info("fetch all flags processing completed")
 	}()
 
@@ -102,7 +102,7 @@ var fetchAllFlags = func() ([]entity.Flag, error) {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "fetch_all_flags",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Info("fetch all flags operation completed")
 	}()
 
@@ -123,7 +123,7 @@ func (ff *jsonFileFetcher) fetch() ([]entity.Flag, error) {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "json_file_fetch",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"file_path": ff.filePath,
 		}).Info("JSON file fetch completed")
 	}()
@@ -152,7 +152,7 @@ func (hf *jsonHTTPFetcher) fetch() ([]entity.Flag, error) {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "json_http_fetch",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 			"url": hf.url,
 		}).Info("JSON HTTP fetch completed")
 	}()
@@ -189,7 +189,7 @@ func (df *dbFetcher) fetch() ([]entity.Flag, error) {
 		duration := time.Since(start)
 		logrus.WithFields(logrus.Fields{
 			"operation": "database_fetch",
-			"duration_us": duration.Microseconds(),
+			"duration_ms": float64(duration.Microseconds()) / 1000.0,
 		}).Info("database fetch completed")
 	}()
 
