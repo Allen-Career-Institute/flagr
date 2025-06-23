@@ -51,26 +51,51 @@ var GetEvalCache = func() *EvalCache {
 // Start starts the polling of EvalCache
 func (ec *EvalCache) Start() {
 	// Initial load attempt
+	start := time.Now()
 	err := ec.reloadMapCache()
+	duration := time.Since(start)
+	
 	if err != nil {
 		// Log error instead of panic
-		logrus.WithError(err).Error("initial cache load failed - feature flag evaluations will be disabled")
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"operation": "initial_cache_load",
+			"duration_us": duration.Microseconds(),
+		}).Error("initial cache load failed - feature flag evaluations will be disabled")
 		ec.isInitialized.Store(false)
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"operation": "initial_cache_load",
+			"duration_us": duration.Microseconds(),
+		}).Info("initial cache load completed successfully")
 	}
 
 	// Background refresh
 	go func() {
 		for range time.Tick(ec.refreshInterval) {
+			start := time.Now()
 			err := ec.reloadMapCache()
+			duration := time.Since(start)
+			
 			if err != nil {
-				logrus.WithField("err", err).Error("reload evaluation cache error")
+				logrus.WithField("err", err).WithFields(logrus.Fields{
+					"operation": "cache_refresh",
+					"duration_us": duration.Microseconds(),
+				}).Error("reload evaluation cache error")
 			} else {
 				// Enable evaluations if cache load succeeds
 				wasInitialized := ec.isInitialized.Load()
 				ec.isInitialized.Store(true)
 
 				if !wasInitialized {
-					logrus.Info("cache successfully reloaded - feature flag evaluations are now enabled")
+					logrus.WithFields(logrus.Fields{
+						"operation": "cache_refresh",
+						"duration_us": duration.Microseconds(),
+					}).Info("cache successfully reloaded - feature flag evaluations are now enabled")
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"operation": "cache_refresh",
+						"duration_us": duration.Microseconds(),
+					}).Info("cache refresh completed successfully")
 				}
 			}
 		}
@@ -78,6 +103,17 @@ func (ec *EvalCache) Start() {
 }
 
 func (ec *EvalCache) GetByTags(tags []string, operator *string) []*entity.Flag {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "cache_get_by_tags",
+			"duration_us": duration.Microseconds(),
+			"tags_count": len(tags),
+			"operator": util.SafeString(operator),
+		}).Info("cache get by tags completed")
+	}()
+
 	if !ec.isInitialized.Load() {
 		logrus.Error("cache not initialized - returning empty list for flag evaluation")
 		return []*entity.Flag{}
@@ -151,6 +187,16 @@ func (ec *EvalCache) getByTagsALL(tags []string) map[uint]*entity.Flag {
 
 // GetByFlagKeyOrID gets the flag by Key or ID
 func (ec *EvalCache) GetByFlagKeyOrID(keyOrID interface{}) *entity.Flag {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "cache_get_by_key_or_id",
+			"duration_us": duration.Microseconds(),
+			"key_or_id": keyOrID,
+		}).Info("cache get by key or ID completed")
+	}()
+
 	if !ec.isInitialized.Load() {
 		logrus.Error("cache not initialized - returning nil for flag evaluation")
 		return nil
@@ -177,12 +223,29 @@ func (ec *EvalCache) GetByFlagKeyOrID(keyOrID interface{}) *entity.Flag {
 }
 
 func (ec *EvalCache) reloadMapCache() error {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "cache_reload_map",
+			"duration_us": duration.Microseconds(),
+		}).Info("cache reload map operation completed")
+	}()
+
 	if config.Config.NewRelicEnabled {
 		defer config.Global.NewrelicApp.StartTransaction("eval_cache_reload", nil, nil).End()
 	}
 
 	_, _, err := withtimeout.Do(ec.refreshTimeout, func() (interface{}, error) {
+		fetchStart := time.Now()
 		idCache, keyCache, tagCache, err := ec.fetchAllFlags()
+		fetchDuration := time.Since(fetchStart)
+		
+		logrus.WithFields(logrus.Fields{
+			"operation": "fetch_all_flags",
+			"duration_us": fetchDuration.Microseconds(),
+		}).Info("fetch all flags operation completed")
+		
 		if err != nil {
 			return nil, err
 		}

@@ -20,6 +20,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/zhouzhuojie/conditions"
+	"github.com/sirupsen/logrus"
 )
 
 // Eval is the Eval interface
@@ -125,6 +126,17 @@ func BlankResult(f *entity.Flag, evalContext models.EvalContext, msg string) *mo
 }
 
 var LookupFlag = func(evalContext models.EvalContext) *entity.Flag {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "flag_lookup",
+			"duration_us": duration.Microseconds(),
+			"flag_id": util.SafeUint(evalContext.FlagID),
+			"flag_key": util.SafeString(evalContext.FlagKey),
+		}).Info("flag lookup completed")
+	}()
+
 	cache := GetEvalCache()
 	flagID := util.SafeUint(evalContext.FlagID)
 	flagKey := util.SafeString(evalContext.FlagKey)
@@ -146,11 +158,35 @@ var EvalFlagsByTags = func(evalContext models.EvalContext) []*models.EvalResult 
 }
 
 var EvalFlag = func(evalContext models.EvalContext) *models.EvalResult {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "flag_evaluation",
+			"duration_us": duration.Microseconds(),
+			"flag_id": util.SafeUint(evalContext.FlagID),
+			"flag_key": util.SafeString(evalContext.FlagKey),
+			"entity_id": util.SafeString(evalContext.EntityID),
+		}).Info("flag evaluation completed")
+	}()
+
 	flag := LookupFlag(evalContext)
 	return EvalFlagWithContext(flag, evalContext)
 }
 
 var EvalFlagWithContext = func(flag *entity.Flag, evalContext models.EvalContext) *models.EvalResult {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "flag_evaluation_with_context",
+			"duration_us": duration.Microseconds(),
+			"flag_id": util.SafeUint(evalContext.FlagID),
+			"flag_key": util.SafeString(evalContext.FlagKey),
+			"entity_id": util.SafeString(evalContext.EntityID),
+		}).Info("flag evaluation with context completed")
+	}()
+
 	flagID := util.SafeUint(evalContext.FlagID)
 	flagKey := util.SafeString(evalContext.FlagKey)
 
@@ -182,6 +218,7 @@ var EvalFlagWithContext = func(flag *entity.Flag, evalContext models.EvalContext
 		evalNextSegment bool
 	)
 
+	segmentEvalStart := time.Now()
 	for _, segment := range flag.Segments {
 		sID = int64(segment.ID)
 		var (
@@ -199,6 +236,16 @@ var EvalFlagWithContext = func(flag *entity.Flag, evalContext models.EvalContext
 			break
 		}
 	}
+	segmentEvalDuration := time.Since(segmentEvalStart)
+	
+	logrus.WithFields(logrus.Fields{
+		"operation": "segment_evaluation",
+		"duration_us": segmentEvalDuration.Microseconds(),
+		"flag_id": flag.ID,
+		"segments_count": len(flag.Segments),
+		"entity_id": util.SafeString(evalContext.EntityID),
+	}).Info("segment evaluation completed")
+
 	evalResult := BlankResult(flag, evalContext, "")
 	evalResult.EvalDebugLog.SegmentDebugLogs = logs
 
@@ -279,6 +326,19 @@ var evalSegment = func(
 	log *models.SegmentDebugLog,
 	evalNextSegment bool,
 ) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "single_segment_evaluation",
+			"duration_us": duration.Microseconds(),
+			"flag_id": flagID,
+			"segment_id": segment.ID,
+			"constraints_count": len(segment.Constraints),
+			"entity_id": util.SafeString(evalContext.EntityID),
+		}).Info("single segment evaluation completed")
+	}()
+
 	if len(segment.Constraints) != 0 {
 		m, ok := evalContext.EntityContext.(map[string]interface{})
 		if !ok {

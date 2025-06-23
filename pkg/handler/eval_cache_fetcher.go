@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/Allen-Career-Institute/flagr/pkg/entity"
 	"github.com/Allen-Career-Institute/flagr/pkg/util"
 	"gorm.io/gorm"
+	"github.com/sirupsen/logrus"
 )
 
 // EvalCacheJSON is the JSON serialization format of EvalCache's flags
@@ -30,6 +32,15 @@ func (ec *EvalCache) export() EvalCacheJSON {
 }
 
 func (ec *EvalCache) fetchAllFlags() (idCache map[string]*entity.Flag, keyCache map[string]*entity.Flag, tagCache map[string]map[uint]*entity.Flag, err error) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "fetch_all_flags_processing",
+			"duration_us": duration.Microseconds(),
+		}).Info("fetch all flags processing completed")
+	}()
+
 	fs, err := fetchAllFlags()
 	if err != nil {
 		return nil, nil, nil, err
@@ -86,6 +97,15 @@ func newFetcher() (evalCacheFetcher, error) {
 }
 
 var fetchAllFlags = func() ([]entity.Flag, error) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "fetch_all_flags",
+			"duration_us": duration.Microseconds(),
+		}).Info("fetch all flags operation completed")
+	}()
+
 	fetcher, err := newFetcher()
 	if err != nil {
 		return nil, err
@@ -98,6 +118,16 @@ type jsonFileFetcher struct {
 }
 
 func (ff *jsonFileFetcher) fetch() ([]entity.Flag, error) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "json_file_fetch",
+			"duration_us": duration.Microseconds(),
+			"file_path": ff.filePath,
+		}).Info("JSON file fetch completed")
+	}()
+
 	var json = jsoniter.ConfigFastest
 
 	b, err := os.ReadFile(ff.filePath)
@@ -117,6 +147,16 @@ type jsonHTTPFetcher struct {
 }
 
 func (hf *jsonHTTPFetcher) fetch() ([]entity.Flag, error) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "json_http_fetch",
+			"duration_us": duration.Microseconds(),
+			"url": hf.url,
+		}).Info("JSON HTTP fetch completed")
+	}()
+
 	var json = jsoniter.ConfigFastest
 
 	client := http.Client{Timeout: config.Config.EvalCacheRefreshTimeout}
@@ -144,6 +184,15 @@ type dbFetcher struct {
 }
 
 func (df *dbFetcher) fetch() ([]entity.Flag, error) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start)
+		logrus.WithFields(logrus.Fields{
+			"operation": "database_fetch",
+			"duration_us": duration.Microseconds(),
+		}).Info("database fetch completed")
+	}()
+
 	// Use eager loading to avoid N+1 problem
 	// doc: http://jinzhu.me/gorm/crud.html#preloading-eager-loading
 	fs := []entity.Flag{}
