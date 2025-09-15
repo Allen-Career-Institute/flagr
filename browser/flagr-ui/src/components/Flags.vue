@@ -290,6 +290,20 @@ export default {
 
         flag._new = true;
         this.flags.unshift(flag);
+        
+        // Enable data records by default for AB mode after flag creation
+        if (this.isModeAB) {
+          getAxiosFlagrInstance().put(`/flags/${flag.id}`, {
+            description: flag.description,
+            dataRecordsEnabled: true,
+            key: flag.key,
+            entityType: flag.entityType || "",
+            notes: flag.notes || ""
+          }).then(() => {
+            // Update the local flag object to reflect the change
+            flag.dataRecordsEnabled = true;
+          }, handleErr.bind(this));
+        }
       }, handleErr.bind(this));
     },
     restoreFlag(row) {
